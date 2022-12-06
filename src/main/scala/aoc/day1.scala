@@ -16,7 +16,7 @@ def computeStocks(rows: List[String]): List[Int] =
         compute(next, head.toInt + currentStock, acc)
     case Nil => acc
 
-  compute(rows, 0, List[Int]())
+  compute(rows, 0, List[Int]()).reverse
 
 def solve(inputPath: String, topCount: Int) = {
   val stocks = computeStocks(getFileContent(inputPath).toList)
@@ -41,5 +41,5 @@ def solveActual(inputPath: String, topCount: Int) = {
 
 @main
 def run(): Unit =
-  // solveInit("./inputs/day1/data.txt", 3)
+  // solveInit("./inputs/day1/data.txt", 1)
   solveActual("./inputs/day1/data.txt", 3)
