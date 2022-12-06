@@ -1,20 +1,25 @@
 package aoc
 
-import scala.collection.mutable
+import scala.annotation.tailrec
+
+def computeStocks(rows: List[String]): List[Int] =
+  @tailrec
+  def compute(
+      rows: List[String],
+      currentStock: Int,
+      acc: List[Int]
+  ): List[Int] = rows match
+    case head :: next =>
+      if (head == "")
+        compute(next, 0, currentStock :: acc)
+      else
+        compute(next, head.toInt + currentStock, acc)
+    case Nil => acc
+
+  compute(rows, 0, List[Int]())
 
 def solve(inputPath: String, topCount: Int) = {
-  var currentStock = 0
-  var stocks = mutable.ArrayBuffer[Int]()
-
-  getFileContent(inputPath).foreach { row =>
-    if (row == "") {
-      stocks.addOne(currentStock)
-      currentStock = 0
-    } else {
-      currentStock += row.toInt
-    }
-  }
-
+  val stocks = computeStocks(getFileContent(inputPath).toList)
   val sorted = stocks.zipWithIndex.sortBy { case (stocks, owner) =>
     stocks
   }(Ordering.Int.reverse)
