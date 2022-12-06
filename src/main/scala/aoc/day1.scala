@@ -4,7 +4,6 @@ import scala.collection.mutable
 
 def solve(inputPath: String, topCount: Int) = {
   var currentStock = 0
-
   var stocks = mutable.ArrayBuffer[Int]()
 
   getFileContent(inputPath).foreach { row =>
