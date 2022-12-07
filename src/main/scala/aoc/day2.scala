@@ -4,6 +4,20 @@ object day2 extends App:
   enum Shape:
     case Rock, Paper, Scissors
 
+  def solve[A](
+      parseRow: String => (Shape, A),
+      calculateResult: (Shape, A) => (Shape, GameResult)
+  )(
+      inputPath: String
+  ): Int =
+    getFileContent(inputPath).toList
+      .map(parseRow)
+      .map { case (opponent, a) =>
+        val (player, gameResult) = calculateResult(opponent, a)
+        resultScore(gameResult) + shapeScore(player)
+      }
+      .sum
+
   def asOpponentShape(str: String): Shape = str match
     case "A" => Shape.Rock
     case "B" => Shape.Paper
@@ -23,47 +37,41 @@ object day2 extends App:
     case GameResult.Lose => 0
 
   object init:
+    def parseRow(str: String): (Shape, Shape) =
+      str.split(" ").toList match
+        case opponent :: player :: Nil =>
+          (asOpponentShape(opponent), asPlayerShape(player))
+
+    def calculateResult(
+        opponent: Shape,
+        player: Shape
+    ): (Shape, GameResult) =
+      val result = (opponent, player) match
+        case (Shape.Rock, Shape.Paper)     => GameResult.Win
+        case (Shape.Rock, Shape.Scissors)  => GameResult.Lose
+        case (Shape.Paper, Shape.Rock)     => GameResult.Lose
+        case (Shape.Paper, Shape.Scissors) => GameResult.Win
+        case (Shape.Scissors, Shape.Rock)  => GameResult.Win
+        case (Shape.Scissors, Shape.Paper) => GameResult.Lose
+        case (_, _)                        => GameResult.Draw
+      (player, result)
+
     private def asPlayerShape(str: String): Shape = str match
       case "X" => Shape.Rock
       case "Y" => Shape.Paper
       case "Z" => Shape.Scissors
 
-    private def calculateOutcome(opponent: Shape, player: Shape): Int =
-      val result =
-        (opponent, player) match
-          case (Shape.Rock, Shape.Paper)     => GameResult.Win
-          case (Shape.Rock, Shape.Scissors)  => GameResult.Lose
-          case (Shape.Paper, Shape.Rock)     => GameResult.Lose
-          case (Shape.Paper, Shape.Scissors) => GameResult.Win
-          case (Shape.Scissors, Shape.Rock)  => GameResult.Win
-          case (Shape.Scissors, Shape.Paper) => GameResult.Lose
-          case (_, _)                        => GameResult.Draw
-
-      resultScore(result) + shapeScore(player)
-
-    private def runGame(turns: List[(Shape, Shape)]): List[Int] =
-      turns.map { case (opponent, player) =>
-        calculateOutcome(opponent, player)
-      }
-
-    def parseGame(str: String): (Shape, Shape) =
-      str.split(" ").toList match
-        case opponent :: player :: Nil =>
-          (asOpponentShape(opponent), asPlayerShape(player))
-
-    def solve(inputPath: String) =
-      val game =
-        runGame(getFileContent(inputPath).toList.map(parseGame))
-      game.sum
-
   object actual:
-    private def asGameResult(str: String): GameResult = str match
-      case "X" => GameResult.Lose
-      case "Y" => GameResult.Draw
-      case "Z" => GameResult.Win
+    def parseRow(str: String): (Shape, GameResult) =
+      str.split(" ").toList match
+        case opponent :: gameResult :: Nil =>
+          (asOpponentShape(opponent), asGameResult(gameResult))
 
-    private def calculateShape(opponent: Shape, result: GameResult): Shape =
-      (opponent, result) match
+    def calculateResult(
+        opponent: Shape,
+        result: GameResult
+    ): (Shape, GameResult) =
+      val player = (opponent, result) match
         case (shape, GameResult.Draw)          => shape
         case (Shape.Rock, GameResult.Lose)     => Shape.Scissors
         case (Shape.Rock, GameResult.Win)      => Shape.Paper
@@ -72,22 +80,16 @@ object day2 extends App:
         case (Shape.Scissors, GameResult.Lose) => Shape.Paper
         case (Shape.Scissors, GameResult.Win)  => Shape.Rock
 
-    private def calculateOutcome(player: Shape, result: GameResult) =
-      resultScore(result) + shapeScore(player)
+      (player, result)
 
-    def parseGame(str: String): (Shape, GameResult) =
-      str.split(" ").toList match
-        case opponent :: gameResult :: Nil =>
-          (asOpponentShape(opponent), asGameResult(gameResult))
+    private def asGameResult(str: String): GameResult = str match
+      case "X" => GameResult.Lose
+      case "Y" => GameResult.Draw
+      case "Z" => GameResult.Win
 
-    def solve(inputPath: String) =
-      getFileContent(inputPath).toList
-        .map(parseGame)
-        .map { case (opponent, result) =>
-          calculateOutcome(calculateShape(opponent, result), result)
-        }
-        .sum
+  val solveInit = solve(init.parseRow, init.calculateResult)
+  val solveActual = solve(actual.parseRow, actual.calculateResult)
 
-  // val res = day2.init.solve("./inputs/day2/data.txt")
-  val res = day2.actual.solve("./inputs/day2/data.txt")
+  // val res = solveInit("./inputs/day2/data.txt")
+  val res = solveActual("./inputs/day2/data.txt")
   println(res)
