@@ -1,12 +1,12 @@
 package aoc
 
 object day8 extends App:
-  def parseTreeRow(row: String): Array[Int] = row.map(_.toInt - 48).toArray
-
   type TreeLine = Array[Int]
   object TreeLine:
     def isShorterThan(n: Int)(treeLine: TreeLine): Boolean =
       treeLine.count(_ < n) == treeLine.length
+
+    def fromString(string: String): TreeLine = string.map(_.toInt - 48).toArray
 
   type Trees = Array[TreeLine]
   object Trees:
@@ -39,7 +39,7 @@ object day8 extends App:
       }).toArray
 
     def solve(inputPath: String): Int =
-      val trees = getFileContent(inputPath).map(parseTreeRow).toArray
+      val trees = getFileContent(inputPath).map(TreeLine.fromString).toArray
       merge(score(trees))
 
   val solutionA = new Solution:
@@ -91,5 +91,5 @@ object day8 extends App:
 
     override def merge(trees: Trees): Int = trees.map(_.max).max
 
-  // println(solutionA.solve("./inputs/day8/data.txt"))
+  println(solutionA.solve("./inputs/day8/data.txt"))
   println(solutionB.solve("./inputs/day8/data.txt"))
