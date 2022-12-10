@@ -76,16 +76,33 @@ object day7 extends App:
   val terminalOutput = getFileContent("./inputs/day7/data.txt").toList
   val commands = Command.parseTerminalOutput(terminalOutput)
   val fs = buildFileSystem(commands)
-  // fs.foreach(println)
   val spaceUsage = calculateSpaceUsage(fs)
-  // spaceUsage.foreach(println)
-  val smallDirs = spaceUsage
-    .filter { case (_, size) =>
-      size <= 100000
-    }
-  // smallDirs.foreach(println)
-  val smallDirsSize = smallDirs.map { case (_, size) =>
-    size
-  }.sum
 
-  println(smallDirsSize)
+  def solveA(spaceUsage: Map[String, Int]): Int =
+    val smallDirs = spaceUsage
+      .filter { case (_, size) =>
+        size <= 100000
+      }
+    smallDirs.map { case (_, size) =>
+      size
+    }.sum
+
+  def solveB(spaceUsage: Map[String, Int]): Int =
+    val totalSpace = 70000000
+    val requiredSpaceForUpdate = 30000000
+    val usedSpace = spaceUsage("/")
+    val spaceNeeded = requiredSpaceForUpdate - (totalSpace - usedSpace)
+
+    val (_, size) = spaceUsage
+      .filter { case (_, size) =>
+        size > spaceNeeded
+      }
+      .toList
+      .sortBy { case (_, size) =>
+        size
+      }
+      .head
+
+    size
+
+  solveB(spaceUsage)
