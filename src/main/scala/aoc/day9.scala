@@ -4,57 +4,50 @@ import scala.collection.mutable.Set
 import scala.collection.mutable.ArrayBuffer
 
 object day9 extends App:
-  extension [A](xs: List[A])
-    def cartesian = for
+  def cartesian[A](xs: List[A]): List[(A, A)] =
+    for
       x <- xs
       y <- xs
     yield (x, y)
 
+  def bind(lowerBound: Int, upperBound: Int)(x: Int): Int =
+    x.max(lowerBound).min(upperBound)
+
   type Position = (Int, Int)
-  object Positions:
+  object Position:
     def areWithinReach(a: Position, b: Position): Boolean =
-      List(-1, 0, 1).cartesian.find { case (dx, dy) =>
+      cartesian(List(-1, 0, 1)).find { case (dx, dy) =>
         (a._1 + dx, a._2 + dy) == b
       }.isDefined
+
+    def follow(head: Position, tail: Position): Position =
+      val (hx, hy) = head
+      val (tx, ty) = tail
+
+      (tx + bindDiff(hx - tx), ty + bindDiff(hy - ty))
+
+    private val bindDiff = bind(lowerBound = -1, upperBound = 1)
 
   enum Direction:
     case Right, Up, Left, Down
 
-  extension (positions: Set[Position])
-    def toString(xMax: Int, yMax: Int, head: Position): String =
-      val map = ArrayBuffer.from(
-        Array.ofDim[String](yMax, xMax).map(_.map(_ => "."))
-      )
-
-      positions.foreach { case (x, y) =>
-        map(yMax - y - 1)(x) = "#"
-      }
-
-      map(yMax - head._2 - 1)(head._1) = "H"
-
-      map.zipWithIndex
-        .map { case (row, index) =>
-          s"""${yMax - index - 1}: ${row.mkString("")}"""
-        }
-        .mkString("\n")
-
-  def solveA(inputPath: String): Int =
-    var headPosition = (0, 0)
-    var tailPosition = (0, 0)
-    val positions = Set[Position](tailPosition)
+  def solve(ropeLength: Int)(inputPath: String): Int =
+    val ropePositions = List.fill(ropeLength)((0, 0)).toArray
+    val tailPositions = Set[Position]((0, 0))
 
     def moveBy(dx: Int, dy: Int): Unit =
-      val (hx, hy) = headPosition
+      val (hx, hy) = ropePositions.head
+      ropePositions(0) = (hx + dx, hy + dy)
 
-      val newHeadPosition = (hx + dx, hy + dy)
-      if (!Positions.areWithinReach(newHeadPosition, tailPosition))
-        // println(
-        //   s"head: ${headPosition} -> ${newHeadPosition}; tail: $tailPosition -> $headPosition"
-        // )
-        tailPosition = headPosition
-        positions.add(tailPosition)
+      1 until ropeLength foreach { knot =>
+        val headPosition = ropePositions(knot - 1)
+        val knotPosition = ropePositions(knot)
 
-      headPosition = newHeadPosition
+        if (!Position.areWithinReach(headPosition, knotPosition))
+          ropePositions(knot) = Position.follow(headPosition, knotPosition)
+      }
+
+      tailPositions.add(ropePositions.last)
 
     def move(direction: Direction, steps: Int): Unit =
       val (dx, dy) = direction match
@@ -68,9 +61,6 @@ object day9 extends App:
       }
 
     getFileContent(inputPath).foreach { input =>
-      // println(positions.toString(6, 5, headPosition))
-      // println("=" * 9)
-
       input match
         case s"R $steps" => move(Direction.Right, steps.toInt)
         case s"U $steps" => move(Direction.Up, steps.toInt)
@@ -79,7 +69,9 @@ object day9 extends App:
 
     }
 
-    // println(positions.toList)
-    positions.size
+    tailPositions.size
 
-  println(solveA("./inputs/day9/data.txt"))
+  val solveA = solve(ropeLength = 2)
+  val solveB = solve(ropeLength = 10)
+  // println(solveA("./inputs/day9/data.txt"))
+  println(solveB("./inputs/day9/data.txt"))
