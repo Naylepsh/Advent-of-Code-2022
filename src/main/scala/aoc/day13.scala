@@ -22,7 +22,6 @@ object day13 extends App:
           Comparison.Greater
         else
           Comparison.Lower
-      println(s"$a :: $b :: $res")
       res
     else if (left.isNumber && right.isArray)
       compare(Json.fromValues(List(left)), right)
@@ -69,5 +68,19 @@ object day13 extends App:
       }
       .sum
 
+  def solveB(pairs: List[(String, String)]) =
+    val dividerPackets = List("[[2]]", "[[6]]")
+    val sortedPackets = (pairs
+      .flatMap { case (a, b) =>
+        List(a, b)
+      } ::: dividerPackets)
+      .sortWith { case (a, b) =>
+        (parse(a), parse(b)) match
+          case (Right(left), Right(right)) => isInRightOrder(left, right)
+      }
+    dividerPackets.map(packet => sortedPackets.indexOf(packet) + 1).product
+
   val input = parseInput("./inputs/day13/data.txt").toList
-  println(solveA(input))
+  // val input = parseInput("./inputs/day13/example.txt").toList
+  // println(solveA(input))
+  println(solveB(input))
