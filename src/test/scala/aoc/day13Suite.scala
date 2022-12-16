@@ -56,7 +56,34 @@ class day13Suite extends munit.FunSuite:
     assertEquals(result, Comparison.Greater)
   }
 
+  test("pair 33") {
+    val result =
+      execute(
+        "[[[],3,[[2,2,7,4,7],1]],[6],[[1,[9]],[[3,6,10,2,0],[10,3,0,6,1],8,7],[[3,7,5,9],5,1]],[0]]",
+        "[[[]],[],[],[1,1,6,[[8,0,5,9,10],6],8]]"
+      )
+
+    assertEquals(result, Comparison.Greater)
+
+  }
+
+  test("pair 66") {
+    val result =
+      execute(
+        "[[5,[[0],6,[7,8,7,5],[4,8,7,7],10],[0,9,[4,9,9,6,3],[6],4],[[8,9],3,[]]],[[]],[0,[[10,10,5,8,5],2,7,0,[3]],[2,[4,6,5,1,6],[7,10,10,4],7]]]",
+        "[[5,0],[[[6,3,5],[3],[8,1,5],5,9],[6],[2,0],2,[10]],[]]"
+      )
+
+    assertEquals(result, Comparison.Greater)
+
+  }
+
+
 object day13Suite:
   def execute(a: String, b: String): Comparison =
     (parse(a), parse(b)) match
-      case (Right(left), Right(right)) => compare(left, right)
+      case (Right(left), Right(right)) =>
+        // println("=" * 30)
+        // println(s"$left :: $right")
+        // println("=" * 30)
+        compare(left, right)

@@ -15,12 +15,15 @@ object day13 extends App:
       val a = toNumberUnsafe(left)
       val b = toNumberUnsafe(right)
 
-      if (a == b)
-        Comparison.Equal
-      else if (a > b)
-        Comparison.Greater
-      else
-        Comparison.Lower
+      val res =
+        if (a == b)
+          Comparison.Equal
+        else if (a > b)
+          Comparison.Greater
+        else
+          Comparison.Lower
+      println(s"$a :: $b :: $res")
+      res
     else if (left.isNumber && right.isArray)
       compare(Json.fromValues(List(left)), right)
     else if (left.isArray && right.isNumber)
@@ -29,18 +32,21 @@ object day13 extends App:
       val a = left.asArray.get
       val b = right.asArray.get
 
-      var i = 0
-      var result: Option[Comparison] = None
-      while (result.isEmpty)
-        if (i >= a.length) result = Some(Comparison.Lower)
-        else if (i >= b.length) result = Some(Comparison.Greater)
-        else
-          val comparison = compare(a(i), b(i))
-          if (comparison != Comparison.Equal)
-            result = Some(comparison)
-        i += 1
+      if (a.isEmpty && b.isEmpty) Comparison.Equal
+      else
+        var i = 0
+        var result: Option[Comparison] = None
+        while (result.isEmpty)
+          if (i >= a.length && i >= b.length) result = Some(Comparison.Equal)
+          else if (i >= a.length) result = Some(Comparison.Lower)
+          else if (i >= b.length) result = Some(Comparison.Greater)
+          else
+            val comparison = compare(a(i), b(i))
+            if (comparison != Comparison.Equal)
+              result = Some(comparison)
+          i += 1
 
-      result.get
+        result.get
 
   def isInRightOrder(left: Json, right: Json) =
     compare(left, right) == Comparison.Lower
