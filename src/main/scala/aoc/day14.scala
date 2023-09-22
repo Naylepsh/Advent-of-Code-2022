@@ -2,13 +2,14 @@ package aoc
 
 object day14 extends App:
   enum Atom:
-    case Rock, Sand, Air
+    case Rock, Sand, SandSource, Air
   object Atom:
     extension (atom: Atom)
       def show: String = atom match
-        case Rock => "#"
-        case Sand => "o"
-        case Air  => "."
+        case Rock       => "#"
+        case Sand       => "o"
+        case SandSource => "+"
+        case Air        => "."
 
       def isSolid: Boolean = atom match
         case Rock | Sand => true
@@ -38,9 +39,6 @@ object day14 extends App:
               (from.x.min(to.x).to(from.x.max(to.x))).foreach: w =>
                 cave(from.y)(w) = Atom.Rock
 
-      private def contains(x: Int, y: Int): Boolean =
-        0 <= y && y < cave.length && 0 <= x && x < cave.head.length
-
       def takeOf(x: Int, y: Int): Option[Atom] =
         if 0 <= y && y < cave.length && 0 <= x && x < cave.head.length
         then Some(cave(y)(x))
@@ -51,29 +49,38 @@ object day14 extends App:
         then cave(y)(x) = atom
 
       @annotation.tailrec
-      def trickleSand(fromX: Int, fromY: Int): Boolean =
-        val nextPosition = List(
-          (fromX, fromY + 1),
-          (fromX - 1, fromY + 1),
-          (fromX + 1, fromY + 1)
-        ).find: (x, y) =>
-          cave.takeOf(x, y).map(_.isSolid) == Some(false)
-        nextPosition match
-          case None =>
-            takeOf(fromX - 1, fromY + 1)
-              .map: _ =>
-                cave.addAt(fromX, fromY, Atom.Sand)
-              .isEmpty
-          case Some(x, y) => trickleSand(x, y)
+      def trickleSand(bottom: Int, fromX: Int, fromY: Int): Boolean =
+        if fromY + 1 == bottom
+        then
+          addAt(fromX, fromY, Atom.Sand)
+          false
+        else
+          val nextPosition = List(
+            (fromX, fromY + 1),
+            (fromX - 1, fromY + 1),
+            (fromX + 1, fromY + 1)
+          ).find: (x, y) =>
+            cave.takeOf(x, y).map(_.isSolid) == Some(false)
+          nextPosition match
+            case None =>
+              val atom = takeOf(fromX - 1, fromY + 1).flatMap: _ =>
+                takeOf(fromX, fromY)
+              atom match
+                case Some(Atom.SandSource) => true
+                case _ =>
+                  addAt(fromX, fromY, Atom.Sand)
+                  false
+            case Some(x, y) => trickleSand(bottom, x, y)
 
       @annotation.tailrec
       def trickleSandUntilSpills(
+          bottom: Int,
           fromX: Int,
           fromY: Int,
           sandUnitsPlaced: Int = 0
       ): Int =
-        if cave.trickleSand(fromX, fromY) then sandUnitsPlaced
-        else trickleSandUntilSpills(fromX, fromY, sandUnitsPlaced + 1)
+        if cave.trickleSand(bottom, fromX, fromY) then sandUnitsPlaced + 1
+        else trickleSandUntilSpills(bottom, fromX, fromY, sandUnitsPlaced + 1)
 
       def show(skipX: Int, limitX: Int, skipY: Int, limitY: Int): String =
         cave
@@ -82,6 +89,25 @@ object day14 extends App:
           .map: line =>
             line.drop(skipY).take(limitY).map(_.show).mkString("")
           .mkString("\n")
+
+      def debug(x: Int, y: Int): Unit =
+        println(s"Debugging at ($x, $y)")
+        scala.io.StdIn.readLine()
+        val atom = cave.takeOf(x, y).get
+        cave.addAt(x, y, Atom.Sand)
+        val vis = cave
+          .drop((y - 5).max(0))
+          .take((10).min(cave.length))
+          .map: line =>
+            line
+              .drop((x - 5).max(0))
+              .take((10).min(line.length))
+              .map(_.show)
+              .mkString("")
+          .mkString("\n")
+        println(vis)
+        println()
+        cave.addAt(x, y, atom)
 
   case class Trace(x: Int, y: Int)
   object Trace:
@@ -95,14 +121,21 @@ object day14 extends App:
 
   import Cave.*
 
-  val cave = Cave(200, 600)
-  getFileContent("./inputs/day14/data.txt")
+  val cave = Cave(1000, 1000)
+
+  // this solves only the 2nd part
+  val bottom = getFileContent("./inputs/day14/data.txt")
+    // val y = getFileContent("./inputs/day14/example.txt")
     .map: line =>
       Trace.fromLine(line)
-    .foreach: traces =>
+    .tapEach: traces =>
       cave.addRockFormation(traces)
-  val units = cave.trickleSandUntilSpills(500, 0)
+    .flatMap: traces =>
+      traces.map(_.y)
+    .toList
+    .max + 2
+
+  cave.addAt(500, 0, Atom.SandSource)
+
+  val units = cave.trickleSandUntilSpills(bottom, 500, 0)
   println(units)
-    // val result = cave.trickleSand(500, 0)
-    // println(s"$i :: $result")
-    // println(cave.show(0, 10, 494, 10))
